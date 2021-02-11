@@ -1,7 +1,8 @@
+import math
 import pygame
-import tkinter as tk
-from tkinter import message_box
 import random
+import tkinter as tk
+from tkinter import messagebox
 
 class Cube(object):
     rows = 20
@@ -80,13 +81,18 @@ class Snake(object):
 
             else:
                 if c.dirnx == -1 and c.pos[0] <= 0: c.pos = (c.rows - 1, c.pos[1])
-                elif c.dirnx == 1 and c.pos[0] >= c.rows - 1: c.pos = (1, c.pos[1])
+                elif c.dirnx == 1 and c.pos[0] >= c.rows - 1: c.pos = (0, c.pos[1])
                 elif c.dirny == 1 and c.pos[1] >= c.rows - 1: c.pos = (c.pos[0], 0)
                 elif c.dirny == -1 and c.pos[1] <= 0: c.pos = (c.pos[0], c.rows - 1)
                 else: c.move(c.dirnx, c.dirny)
     
     def reset(self, pos):
-        pass
+        self.head = Cube(pos)
+        self.body = []
+        self.body.append(self.head)
+        self.turns = {}
+        self.dirnx = 0
+        self.dirny = 1
     
     def addCube(self):
         tail = self.body[-1]
@@ -100,6 +106,9 @@ class Snake(object):
             self.body.append(Cube((tail.pos[0], tail.pos[1]-1)))
         elif dx == 0 and dy == -1:
             self.body.append(Cube((tail.pos[0], tail.pos[1]+1)))
+
+        self.body[-1].dirnx = dx
+        self.body[-1].dirny = dy
     
     def draw(self, surface):
         for i, c in enumerate(self.body):
@@ -113,6 +122,7 @@ def drawGrid(w, rows, surface):
 
     x = 0
     y = 0
+
     for i in range(rows):
         x = x + sizeBtwn
         y = y + sizeBtwn
@@ -121,19 +131,20 @@ def drawGrid(w, rows, surface):
         pygame.draw.line(surface, (255,255,255), (0,y), (w,y))
 
 def redrawWindow(surface):
-    global rows, width, s
+    global rows, width, s, snack
     surface.fill((0,0,0))
-    s.draw(surface, )
-    drawGrid(width, row, surface)
+    s.draw(surface)
+    snack.draw(surface)
+    drawGrid(width, rows, surface)
     pygame.display.update()
 
 def randomSnack(rows, item):
-    global rows
     positions = item.body
 
     while True:
         x = random.randrange(rows)
         y = random.randrange(rows)
+
         if len(list(filter(lambda z:z.pos == (x,y), positions))) > 0:
             continue
         else:
@@ -142,13 +153,20 @@ def randomSnack(rows, item):
     return (x,y)
 
 def message_box(subject, content):
-    pass
+    root = tk.Tk()
+    root.attributes("-topmost", True)
+    root.withdraw()
+    messagebox.showinfo(subject, content)
+    try:
+        root.destroy()
+    except:
+        pass
 
 def main():
-    global width, rows
+    global width, rows, s, snack
     width = 500
     rows = 20
-    win = pygame.display.set_mode(width, width)
+    win = pygame.display.set_mode((width, width))
     s = Snake((255, 0, 0), (10,10))
     snack = Cube(randomSnack(rows, s), color=(0,255,0))
     flag = True
@@ -163,16 +181,14 @@ def main():
             s.addCube()
             snack = Cube(randomSnack(rows, s), color=(0,255,0))
 
+        for x in range(len(s.body)):
+            if s.body[x].pos in list(map(lambda z:z.pos, s.body[x+1:])):
+                print('Score:', len(s.body))
+                message_box("You Lost!", "Play again...")
+                s.reset((10,10))
+                break
+
         redrawWindow(win)
     pass
 
 main()
-
-# rows = 
-# w = 
-# h =
-
-# cube.rows = rows
-# cube.w = win
-
-# main()
